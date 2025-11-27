@@ -358,6 +358,124 @@
       pointer-events: none;
     }
     
+    .game-panel {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: linear-gradient(135deg, rgba(0,0,0,0.95), rgba(0,50,0,0.9));
+      border: 3px solid #00ff00;
+      border-radius: 15px;
+      padding: 20px;
+      min-width: 400px;
+      max-width: 80vw;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 0 50px rgba(0,255,0,0.8);
+      z-index: 1000;
+      animation: fadeIn 0.3s;
+    }
+    
+    .game-panel h2 {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 18px;
+      color: #00ff00;
+      text-align: center;
+      margin-bottom: 20px;
+      text-shadow: 0 0 15px rgba(0,255,0,0.8);
+    }
+    
+    .game-panel h3 {
+      font-family: 'Cinzel', serif;
+      font-size: 14px;
+      color: #00ffff;
+      margin: 10px 0;
+    }
+    
+    .close-btn {
+      display: block;
+      margin: 20px auto 0;
+      padding: 10px 30px;
+      background: linear-gradient(135deg, #ff0000, #cc0000);
+      border: 2px solid #ff0000;
+      color: white;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    
+    .close-btn:hover {
+      background: linear-gradient(135deg, #ff3333, #ff0000);
+      box-shadow: 0 0 20px rgba(255,0,0,0.8);
+    }
+    
+    .item-slot {
+      display: inline-block;
+      width: 60px;
+      height: 60px;
+      margin: 5px;
+      background: rgba(0,0,0,0.8);
+      border: 2px solid #333;
+      border-radius: 5px;
+      position: relative;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    
+    .item-slot:hover {
+      border-color: #00ff00;
+      box-shadow: 0 0 15px rgba(0,255,0,0.5);
+    }
+    
+    .item-slot.rare { border-color: #0070dd; }
+    .item-slot.epic { border-color: #a335ee; }
+    .item-slot.legendary { border-color: #ff8000; }
+    
+    .skill-btn {
+      display: inline-block;
+      width: 80px;
+      height: 80px;
+      margin: 10px;
+      background: linear-gradient(135deg, rgba(0,100,0,0.8), rgba(0,50,0,0.8));
+      border: 3px solid #00ff00;
+      border-radius: 10px;
+      color: white;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      position: relative;
+    }
+    
+    .skill-btn:hover {
+      transform: scale(1.1);
+      box-shadow: 0 0 25px rgba(0,255,0,0.8);
+    }
+    
+    .skill-btn.locked {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+    
+    .quest-item {
+      background: rgba(0,50,0,0.5);
+      border-left: 4px solid #00ff00;
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 5px;
+      transition: all 0.3s;
+    }
+    
+    .quest-item:hover {
+      background: rgba(0,100,0,0.7);
+      transform: translateX(5px);
+    }
+    
+    .quest-item.completed {
+      border-left-color: #ffd700;
+      opacity: 0.7;
+    }
+    
     @media (max-width: 600px) {
       #canvas {
         max-width: 100vw;
@@ -369,6 +487,9 @@
       #storyText {
         font-size: 14px;
       }
+      .game-panel {
+        min-width: 90vw;
+      }
     }
   </style>
 </head>
@@ -379,15 +500,28 @@
     
     <div id="fps">FPS: 0</div>
     
+    <!-- 主菜单按钮 -->
+    <div style="position: absolute; top: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 5px; z-index: 200;">
+      <button class="audio-btn" id="menuCharacter">👤 角色</button>
+      <button class="audio-btn" id="menuInventory">🎒 背包</button>
+      <button class="audio-btn" id="menuSkills">⚔️ 技能</button>
+      <button class="audio-btn" id="menuQuests">📜 任务</button>
+      <button class="audio-btn" id="menuMap">🗺️ 地图</button>
+      <button class="audio-btn" id="menuGuild">🏰 公会</button>
+      <button class="audio-btn" id="menuPVP">⚔️ PVP</button>
+      <button class="audio-btn" id="menuShop">🛒 商店</button>
+    </div>
+    
     <div id="audioControls">
       <button class="audio-btn" id="musicBtn">🎵 Music</button>
       <button class="audio-btn" id="sfxBtn">🔊 SFX</button>
     </div>
     
     <div id="ui">
-      <div id="health">❤️ HP: 100</div>
-      <div id="score">⭐ Score: 0</div>
-      <div id="players">👥 Players: 1</div>
+      <div id="health">❤️ HP: 100/100</div>
+      <div id="mana">💧 MP: 100/100</div>
+      <div id="level">⭐ Lv.1 (0/100)</div>
+      <div id="score">🏆 Score: 0</div>
     </div>
     
     <div id="playerList"></div>
@@ -401,6 +535,72 @@
     <div id="storyPanel">
       <div id="storySpeaker"></div>
       <div id="storyText"></div>
+    </div>
+    
+    <!-- 角色面板 -->
+    <div id="characterPanel" class="game-panel" style="display:none;">
+      <h2>👤 角色信息</h2>
+      <div id="charInfo"></div>
+      <button class="close-btn" onclick="document.getElementById('characterPanel').style.display='none'">关闭</button>
+    </div>
+    
+    <!-- 背包面板 -->
+    <div id="inventoryPanel" class="game-panel" style="display:none;">
+      <h2>🎒 背包</h2>
+      <div id="inventoryGrid"></div>
+      <button class="close-btn" onclick="document.getElementById('inventoryPanel').style.display='none'">关闭</button>
+    </div>
+    
+    <!-- 技能面板 -->
+    <div id="skillsPanel" class="game-panel" style="display:none;">
+      <h2>⚔️ 技能树</h2>
+      <div id="skillTree"></div>
+      <button class="close-btn" onclick="document.getElementById('skillsPanel').style.display='none'">关闭</button>
+    </div>
+    
+    <!-- 任务面板 -->
+    <div id="questsPanel" class="game-panel" style="display:none;">
+      <h2>📜 任务日志</h2>
+      <div style="display:flex; gap:10px;">
+        <div style="flex:1;">
+          <h3>主线任务</h3>
+          <div id="mainQuests"></div>
+        </div>
+        <div style="flex:1;">
+          <h3>每日任务</h3>
+          <div id="dailyQuests"></div>
+        </div>
+      </div>
+      <button class="close-btn" onclick="document.getElementById('questsPanel').style.display='none'">关闭</button>
+    </div>
+    
+    <!-- 地图面板 -->
+    <div id="mapPanel" class="game-panel" style="display:none;">
+      <h2>🗺️ 世界地图</h2>
+      <div id="worldMap"></div>
+      <button class="close-btn" onclick="document.getElementById('mapPanel').style.display='none'">关闭</button>
+    </div>
+    
+    <!-- 公会面板 -->
+    <div id="guildPanel" class="game-panel" style="display:none;">
+      <h2>🏰 公会</h2>
+      <div id="guildInfo"></div>
+      <button class="close-btn" onclick="document.getElementById('guildPanel').style.display='none'">关闭</button>
+    </div>
+    
+    <!-- PVP面板 -->
+    <div id="pvpPanel" class="game-panel" style="display:none;">
+      <h2>⚔️ PVP竞技场</h2>
+      <div id="pvpArenas"></div>
+      <div id="pvpRanking"></div>
+      <button class="close-btn" onclick="document.getElementById('pvpPanel').style.display='none'">关闭</button>
+    </div>
+    
+    <!-- 商店面板 -->
+    <div id="shopPanel" class="game-panel" style="display:none;">
+      <h2>🛒 神秘商店</h2>
+      <div id="shopItems"></div>
+      <button class="close-btn" onclick="document.getElementById('shopPanel').style.display='none'">关闭</button>
     </div>
     
     <div id="connectionStatus">
@@ -428,8 +628,371 @@
     <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_c6f5764d24.mp3" type="audio/mp3">
   </audio>
 
+  <script src="game-data.js"></script>
   <script src="/socket.io/socket.io.js"></script>
   <script>
+    // 玩家扩展数据
+    const playerData = {
+      class: 'warrior',
+      level: 1,
+      exp: 0,
+      maxExp: 100,
+      hp: 100,
+      maxHp: 100,
+      mp: 100,
+      maxMp: 100,
+      stats: { str: 10, agi: 5, int: 3, vit: 8 },
+      gold: 0,
+      honor: 0,
+      inventory: [],
+      equipment: {},
+      skills: [],
+      quests: { active: [], completed: [] },
+      achievements: [],
+      pets: [],
+      mounts: [],
+      professions: {},
+      guild: null,
+      pvpRating: 0
+    };
+    
+    // UI管理
+    const UI = {
+      showCharacter() {
+        const panel = document.getElementById('characterPanel');
+        const info = document.getElementById('charInfo');
+        const classData = GAME_DATA.classes[playerData.class];
+        
+        info.innerHTML = `
+          <div style="text-align:center; margin-bottom:20px;">
+            <div style="font-size:60px;">${classData.icon}</div>
+            <h3>${classData.name} - 等级 ${playerData.level}</h3>
+            <div style="margin:10px 0;">
+              <div>💰 金币: ${playerData.gold.toLocaleString()}</div>
+              <div>🏆 荣誉: ${playerData.honor}</div>
+              <div>⭐ 经验: ${playerData.exp}/${playerData.maxExp}</div>
+            </div>
+          </div>
+          <div style="background:rgba(0,0,0,0.5); padding:15px; border-radius:10px;">
+            <h3>属性</h3>
+            <div>💪 力量: ${playerData.stats.str}</div>
+            <div>🏃 敏捷: ${playerData.stats.agi}</div>
+            <div>🧠 智力: ${playerData.stats.int}</div>
+            <div>❤️ 体质: ${playerData.stats.vit}</div>
+          </div>
+          <div style="background:rgba(0,0,0,0.5); padding:15px; border-radius:10px; margin-top:15px;">
+            <h3>战斗数据</h3>
+            <div>⚔️ 攻击力: ${this.calculateAttack()}</div>
+            <div>🛡️ 防御力: ${this.calculateDefense()}</div>
+            <div>💥 暴击率: ${this.calculateCrit()}%</div>
+            <div>✨ 暴击伤害: ${this.calculateCritDamage()}%</div>
+          </div>
+        `;
+        panel.style.display = 'block';
+      },
+      
+      showInventory() {
+        const panel = document.getElementById('inventoryPanel');
+        const grid = document.getElementById('inventoryGrid');
+        
+        let html = '<div style="display:grid; grid-template-columns:repeat(8,70px); gap:5px;">';
+        for (let i = 0; i < 64; i++) {
+          const item = playerData.inventory[i];
+          if (item) {
+            html += `<div class="item-slot ${item.rarity}" title="${item.name}">
+              <div style="text-align:center; padding:10px;">${item.icon || '📦'}</div>
+              <div style="font-size:10px; text-align:center;">${item.name.slice(0,6)}</div>
+            </div>`;
+          } else {
+            html += `<div class="item-slot"></div>`;
+          }
+        }
+        html += '</div>';
+        html += `<div style="margin-top:20px; text-align:center; color:#ffd700;">
+          背包空间: ${playerData.inventory.length}/64
+        </div>`;
+        
+        grid.innerHTML = html;
+        panel.style.display = 'block';
+      },
+      
+      showSkills() {
+        const panel = document.getElementById('skillsPanel');
+        const tree = document.getElementById('skillTree');
+        const classData = GAME_DATA.classes[playerData.class];
+        
+        let html = `<div style="text-align:center; margin-bottom:20px;">
+          <h3>${classData.name}技能树</h3>
+          <div>可用技能点: ${playerData.skillPoints || 0}</div>
+        </div>`;
+        
+        html += '<div style="display:flex; flex-wrap:wrap; justify-content:center;">';
+        classData.skills.forEach(skill => {
+          const unlocked = playerData.level >= skill.level;
+          const learned = playerData.skills.includes(skill.id);
+          
+          html += `
+            <div class="skill-btn ${!unlocked ? 'locked' : ''}" 
+                 title="${skill.desc}">
+              <div style="font-size:30px; margin-top:10px;">⚔️</div>
+              <div style="font-size:10px;">${skill.name}</div>
+              <div style="font-size:8px;">Lv.${skill.level}</div>
+              ${learned ? '<div style="position:absolute; top:5px; right:5px; color:#00ff00;">✓</div>' : ''}
+            </div>
+          `;
+        });
+        html += '</div>';
+        
+        tree.innerHTML = html;
+        panel.style.display = 'block';
+      },
+      
+      showQuests() {
+        const panel = document.getElementById('questsPanel');
+        const main = document.getElementById('mainQuests');
+        const daily = document.getElementById('dailyQuests');
+        
+        // 主线任务
+        let mainHtml = '';
+        GAME_DATA.quests.main.slice(0, 5).forEach(quest => {
+          const completed = playerData.quests.completed.includes(quest.id);
+          mainHtml += `
+            <div class="quest-item ${completed ? 'completed' : ''}">
+              <div style="font-weight:bold; color:#ffd700;">第${quest.chapter}章: ${quest.name}</div>
+              <div style="font-size:12px; margin:5px 0;">${quest.desc}</div>
+              <div style="font-size:11px; color:#aaa;">
+                奖励: 💰${quest.rewards.gold} 经验${quest.rewards.exp}
+              </div>
+              ${completed ? '<div style="color:#00ff00;">✓ 已完成</div>' : '<div style="color:#ffaa00;">进行中...</div>'}
+            </div>
+          `;
+        });
+        
+        // 每日任务
+        let dailyHtml = '';
+        GAME_DATA.quests.daily.forEach(quest => {
+          dailyHtml += `
+            <div class="quest-item">
+              <div style="font-weight:bold; color:#00ffff;">${quest.name}</div>
+              <div style="font-size:12px; margin:5px 0;">${quest.desc}</div>
+              <div style="font-size:11px; color:#aaa;">
+                奖励: 💰${quest.rewards.gold} 经验${quest.rewards.exp}
+              </div>
+              <div style="margin-top:5px;">
+                <div style="background:#333; height:10px; border-radius:5px; overflow:hidden;">
+                  <div style="background:#00ff00; height:100%; width:0%;"></div>
+                </div>
+              </div>
+            </div>
+          `;
+        });
+        
+        main.innerHTML = mainHtml;
+        daily.innerHTML = dailyHtml;
+        panel.style.display = 'block';
+      },
+      
+      showMap() {
+        const panel = document.getElementById('mapPanel');
+        const map = document.getElementById('worldMap');
+        
+        let html = '<div style="display:grid; grid-template-columns:repeat(2,1fr); gap:15px;">';
+        GAME_DATA.maps.forEach(area => {
+          html += `
+            <div style="background:rgba(0,50,0,0.5); padding:15px; border-radius:10px; border:2px solid #00ff00; cursor:pointer;" 
+                 onmouseover="this.style.background='rgba(0,100,0,0.7)'"
+                 onmouseout="this.style.background='rgba(0,50,0,0.5)'">
+              <h3 style="color:#00ff00;">${area.name}</h3>
+              <div style="font-size:12px; color:#aaa;">等级: ${area.level}</div>
+              <div style="font-size:11px; margin-top:5px;">
+                怪物: ${area.monsters.join(', ')}
+              </div>
+              <div style="font-size:11px; color:#ff0000; margin-top:5px;">
+                BOSS: ${area.boss}
+              </div>
+            </div>
+          `;
+        });
+        html += '</div>';
+        
+        map.innerHTML = html;
+        panel.style.display = 'block';
+      },
+      
+      showGuild() {
+        const panel = document.getElementById('guildPanel');
+        const info = document.getElementById('guildInfo');
+        
+        if (!playerData.guild) {
+          info.innerHTML = `
+            <div style="text-align:center; padding:40px;">
+              <div style="font-size:60px;">🏰</div>
+              <h3>你还没有加入公会</h3>
+              <button class="audio-btn" style="margin-top:20px;">创建公会</button>
+              <button class="audio-btn" style="margin-top:10px;">查找公会</button>
+            </div>
+          `;
+        } else {
+          info.innerHTML = `
+            <div style="text-align:center;">
+              <h3>${playerData.guild.name}</h3>
+              <div>等级: ${playerData.guild.level}</div>
+              <div>成员: ${playerData.guild.members}/100</div>
+            </div>
+            <div style="margin-top:20px;">
+              <h3>公会技能</h3>
+              ${GAME_DATA.guild.skills.map(skill => `
+                <div class="quest-item">
+                  <div style="font-weight:bold;">${skill.name}</div>
+                  <div style="font-size:12px;">${skill.effect}</div>
+                  <div style="font-size:11px; color:#ffd700;">消耗: ${skill.cost} 公会资金</div>
+                </div>
+              `).join('')}
+            </div>
+          `;
+        }
+        
+        panel.style.display = 'block';
+      },
+      
+      showPVP() {
+        const panel = document.getElementById('pvpPanel');
+        const arenas = document.getElementById('pvpArenas');
+        const ranking = document.getElementById('pvpRanking');
+        
+        let arenasHtml = '<h3>竞技场模式</h3>';
+        GAME_DATA.pvp.arenas.forEach(arena => {
+          arenasHtml += `
+            <div class="quest-item" style="cursor:pointer;">
+              <div style="font-weight:bold; font-size:16px;">${arena.name}</div>
+              <div style="font-size:14px; color:#00ffff;">${arena.mode}</div>
+              <div style="font-size:12px; margin-top:5px;">
+                奖励: 荣誉${arena.rewards.honor} 评分+${arena.rewards.rating}
+              </div>
+              <button class="audio-btn" style="margin-top:10px;">进入战斗</button>
+            </div>
+          `;
+        });
+        
+        let rankingHtml = '<h3 style="margin-top:20px;">段位系统</h3>';
+        const currentRating = playerData.pvpRating || 0;
+        GAME_DATA.pvp.ranks.forEach(rank => {
+          const achieved = currentRating >= rank.rating;
+          rankingHtml += `
+            <div class="quest-item ${achieved ? 'completed' : ''}" style="opacity:${achieved ? 1 : 0.5};">
+              <div style="font-weight:bold;">${rank.tier.toUpperCase()}</div>
+              <div style="font-size:12px;">评分要求: ${rank.rating}</div>
+              <div style="font-size:11px; color:#ffd700;">
+                奖励: ${rank.rewards.title}
+              </div>
+              ${achieved ? '<div style="color:#00ff00;">✓ 已达成</div>' : ''}
+            </div>
+          `;
+        });
+        
+        arenas.innerHTML = arenasHtml;
+        ranking.innerHTML = rankingHtml;
+        panel.style.display = 'block';
+      },
+      
+      showShop() {
+        const panel = document.getElementById('shopPanel');
+        const items = document.getElementById('shopItems');
+        
+        let html = '<div style="display:grid; grid-template-columns:repeat(3,1fr); gap:15px;">';
+        
+        // 展示一些传说装备
+        const legendaryItems = GAME_DATA.equipment.weapons.filter(w => w.rarity === 'legendary');
+        legendaryItems.forEach(item => {
+          html += `
+            <div style="background:rgba(255,128,0,0.2); padding:15px; border-radius:10px; border:2px solid #ff8000; text-align:center;">
+              <div style="font-size:40px;">⚔️</div>
+              <div style="font-weight:bold; color:#ff8000;">${item.name}</div>
+              <div style="font-size:12px; color:#aaa; margin:5px 0;">
+                等级要求: ${item.level}
+              </div>
+              <div style="font-size:14px; color:#ffd700; margin:10px 0;">
+                💰 ${(item.level * 10000).toLocaleString()} 金币
+              </div>
+              <button class="audio-btn">购买</button>
+            </div>
+          `;
+        });
+        html += '</div>';
+        
+        items.innerHTML = html;
+        panel.style.display = 'block';
+      },
+      
+      calculateAttack() {
+        return playerData.stats.str * 2 + playerData.level * 5;
+      },
+      
+      calculateDefense() {
+        return playerData.stats.vit * 2 + playerData.level * 3;
+      },
+      
+      calculateCrit() {
+        return Math.min(50, playerData.stats.agi * 0.5 + 5);
+      },
+      
+      calculateCritDamage() {
+        return 150 + playerData.stats.str * 2;
+      }
+    };
+    
+    // 绑定菜单按钮
+    document.getElementById('menuCharacter').addEventListener('click', () => UI.showCharacter());
+    document.getElementById('menuInventory').addEventListener('click', () => UI.showInventory());
+    document.getElementById('menuSkills').addEventListener('click', () => UI.showSkills());
+    document.getElementById('menuQuests').addEventListener('click', () => UI.showQuests());
+    document.getElementById('menuMap').addEventListener('click', () => UI.showMap());
+    document.getElementById('menuGuild').addEventListener('click', () => UI.showGuild());
+    document.getElementById('menuPVP').addEventListener('click', () => UI.showPVP());
+    document.getElementById('menuShop').addEventListener('click', () => UI.showShop());
+    
+    // 经验和升级系统
+    function gainExp(amount) {
+      playerData.exp += amount;
+      if (playerData.exp >= playerData.maxExp) {
+        levelUp();
+      }
+      updateUI();
+    }
+    
+    function levelUp() {
+      playerData.level++;
+      playerData.exp = 0;
+      playerData.maxExp = Math.floor(playerData.maxExp * 1.5);
+      playerData.stats.str += 2;
+      playerData.stats.agi += 2;
+      playerData.stats.int += 2;
+      playerData.stats.vit += 2;
+      playerData.maxHp += 20;
+      playerData.maxMp += 15;
+      playerData.hp = playerData.maxHp;
+      playerData.mp = playerData.maxMp;
+      playerData.skillPoints = (playerData.skillPoints || 0) + 1;
+      
+      showToast(`🎉 升级！等级提升至 ${playerData.level}`, 3000);
+      createExplosion(250, 240, '#FFD700');
+    }
+    
+    // 更新UI显示
+    function updateUIData() {
+      document.getElementById('health').textContent = `❤️ HP: ${playerData.hp}/${playerData.maxHp}`;
+      document.getElementById('mana').textContent = `💧 MP: ${playerData.mp}/${playerData.maxMp}`;
+      document.getElementById('level').textContent = `⭐ Lv.${playerData.level} (${playerData.exp}/${playerData.maxExp})`;
+      document.getElementById('score').textContent = `🏆 ${playerData.gold.toLocaleString()}金币`;
+    }
+    
+    // 初始化一些物品
+    playerData.inventory.push(
+      { name: '新手剑', rarity: 'common', icon: '⚔️' },
+      { name: '生命药水', rarity: 'common', icon: '🧪' },
+      { name: '法力药水', rarity: 'common', icon: '💧' }
+    );
+    
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true });
     const particleCanvas = document.getElementById('particleCanvas');
@@ -722,7 +1285,11 @@
       delete enemies[data.enemyId];
       if (data.killerId === myPlayerId) {
         players[myPlayerId].score += 10;
+        playerData.gold += 50;
+        gainExp(20);
+        showToast('💰 +50金币 ⭐ +20经验', 2000);
         updateUI();
+        updateUIData();
       }
     });
 
@@ -1115,10 +1682,11 @@
 
     function updateUI() {
       if (players[myPlayerId]) {
-        document.getElementById('health').textContent = `❤️ HP: ${players[myPlayerId].health}`;
-        document.getElementById('score').textContent = `⭐ Score: ${players[myPlayerId].score}`;
+        document.getElementById('health').textContent = `❤️ HP: ${players[myPlayerId].health}/${playerData.maxHp}`;
+        document.getElementById('score').textContent = `🏆 ${playerData.gold.toLocaleString()}金币`;
       }
       document.getElementById('players').textContent = `👥 Players: ${Object.keys(players).length}`;
+      updateUIData();
     }
 
     function updatePlayerList() {

@@ -1,0 +1,8 @@
+services:
+  pygametutorials:
+    image: pygametutorials
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    ports:
+      - 8000:8000
