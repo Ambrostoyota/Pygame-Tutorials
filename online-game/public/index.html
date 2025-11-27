@@ -510,6 +510,10 @@
       <button class="audio-btn" id="menuGuild">🏰 公会</button>
       <button class="audio-btn" id="menuPVP">⚔️ PVP</button>
       <button class="audio-btn" id="menuShop">🛒 商店</button>
+      <button class="audio-btn" id="menuFriends">👥 好友</button>
+      <button class="audio-btn" id="menuMail">📧 邮件</button>
+      <button class="audio-btn" id="menuAuction">💰 拍卖</button>
+      <button class="audio-btn" id="menuChat">💬 聊天</button>
     </div>
     
     <div id="audioControls">
@@ -603,6 +607,39 @@
       <button class="close-btn" onclick="document.getElementById('shopPanel').style.display='none'">关闭</button>
     </div>
     
+    <!-- 好友面板 -->
+    <div id="friendsPanel" class="game-panel" style="display:none;">
+      <h2>👥 好友列表</h2>
+      <div id="friendsList"></div>
+      <button class="close-btn" onclick="document.getElementById('friendsPanel').style.display='none'">关闭</button>
+    </div>
+    
+    <!-- 邮件面板 -->
+    <div id="mailPanel" class="game-panel" style="display:none;">
+      <h2>📧 邮件系统</h2>
+      <div id="mailList"></div>
+      <button class="close-btn" onclick="document.getElementById('mailPanel').style.display='none'">关闭</button>
+    </div>
+    
+    <!-- 拍卖行面板 -->
+    <div id="auctionPanel" class="game-panel" style="display:none;">
+      <h2>💰 拍卖行</h2>
+      <div id="auctionItems"></div>
+      <button class="close-btn" onclick="document.getElementById('auctionPanel').style.display='none'">关闭</button>
+    </div>
+    
+    <!-- 聊天面板 -->
+    <div id="chatPanel" class="game-panel" style="display:none;">
+      <h2>💬 聊天频道</h2>
+      <div id="chatChannels"></div>
+      <div id="chatMessages" style="height:300px; overflow-y:auto; background:#222; padding:10px; margin:10px 0;"></div>
+      <div style="display:flex; gap:5px;">
+        <input type="text" id="chatInput" placeholder="输入消息..." style="flex:1; padding:5px; background:#333; border:1px solid #666; color:#fff;">
+        <button onclick="sendChatMessage()" style="padding:5px 15px;">发送</button>
+      </div>
+      <button class="close-btn" onclick="document.getElementById('chatPanel').style.display='none'">关闭</button>
+    </div>
+    
     <div id="connectionStatus">
       🔌 Connecting...
       <div id="loadingSpinner"></div>
@@ -653,7 +690,13 @@
       mounts: [],
       professions: {},
       guild: null,
-      pvpRating: 0
+      pvpRating: 0,
+      friends: [],
+      mail: [],
+      chatHistory: [],
+      tradeHistory: [],
+      alignment: 'neutral', // good/neutral/evil
+      storyProgress: { chapter: 1, act: 1, choices: [] }
     };
     
     // UI管理
@@ -938,8 +981,123 @@
       
       calculateCritDamage() {
         return 150 + playerData.stats.str * 2;
+      },
+      
+      showFriends() {
+        const panel = document.getElementById('friendsPanel');
+        const list = document.getElementById('friendsList');
+        const social = GAME_DATA.social;
+        
+        list.innerHTML = `
+          <div style="margin-bottom:15px;">
+            <p>📊 好友上限: ${social.friendsList.maxFriends}</p>
+            <p>👥 当前好友: 0/${social.friendsList.maxFriends}</p>
+          </div>
+          <div style="display:flex; gap:10px; margin-bottom:10px;">
+            ${social.friendsList.categories.map(cat => 
+              `<button class="skill-btn">${cat}</button>`
+            ).join('')}
+          </div>
+          <div style="background:#222; padding:10px; border-radius:5px;">
+            <p style="color:#888; text-align:center;">暂无好友</p>
+            <p style="color:#666; font-size:12px; text-align:center; margin-top:10px;">
+              功能: ${social.friendsList.features.join(' | ')}
+            </p>
+          </div>
+        `;
+        panel.style.display = 'block';
+      },
+      
+      showMail() {
+        const panel = document.getElementById('mailPanel');
+        const list = document.getElementById('mailList');
+        const mail = GAME_DATA.mail;
+        
+        list.innerHTML = `
+          <div style="display:flex; gap:5px; margin-bottom:10px;">
+            ${mail.types.map(type => 
+              `<button class="skill-btn">${type.icon} ${type.name}</button>`
+            ).join('')}
+          </div>
+          <div style="background:#222; padding:15px; border-radius:5px; margin-bottom:10px;">
+            <p>📬 收件箱: 0/${mail.maxInbox}</p>
+            <p>⭐ 保存: 0/${mail.maxSaved}</p>
+          </div>
+          <div style="background:#222; padding:10px; border-radius:5px;">
+            <p style="color:#888; text-align:center;">收件箱为空</p>
+            <p style="color:#666; font-size:12px; margin-top:10px;">
+              功能: ${mail.features.join(' | ')}
+            </p>
+          </div>
+        `;
+        panel.style.display = 'block';
+      },
+      
+      showAuction() {
+        const panel = document.getElementById('auctionPanel');
+        const items = document.getElementById('auctionItems');
+        const ah = GAME_DATA.trading.auctionHouse;
+        
+        items.innerHTML = `
+          <div style="display:flex; gap:5px; margin-bottom:10px; flex-wrap:wrap;">
+            ${ah.categories.map(cat => 
+              `<button class="skill-btn">${cat}</button>`
+            ).join('')}
+          </div>
+          <div style="display:flex; gap:5px; margin-bottom:10px;">
+            ${ah.rarities.map(rarity => 
+              `<button class="skill-btn">${rarity}</button>`
+            ).join('')}
+          </div>
+          <div style="background:#222; padding:15px; border-radius:5px; margin-bottom:10px;">
+            <p>💰 上架费: ${ah.fees.listingFee * 100}%</p>
+            <p>💸 手续费: ${ah.fees.successFee * 100}%</p>
+            <p>⏰ 时长: ${ah.fees.duration.join('h / ')}h</p>
+          </div>
+          <div style="background:#222; padding:10px; border-radius:5px;">
+            <h4>🔥 热门商品</h4>
+            ${GAME_DATA.equipment.weapons.filter(w => w.rarity === 'legendary').slice(0, 3).map(item => 
+              `<div class="item-slot ${item.rarity}" style="margin:5px 0;">
+                <strong>${item.name}</strong><br>
+                <small>💰 起拍价: ${item.requiredLevel * 10000}金币</small>
+              </div>`
+            ).join('')}
+            <p style="color:#666; font-size:12px; margin-top:10px;">
+              功能: ${ah.features.join(' | ')}
+            </p>
+          </div>
+        `;
+        panel.style.display = 'block';
+      },
+      
+      showChat() {
+        const panel = document.getElementById('chatPanel');
+        const channels = document.getElementById('chatChannels');
+        const social = GAME_DATA.social;
+        
+        channels.innerHTML = social.chatChannels.map(ch => 
+          `<button class="skill-btn" style="background:${ch.color}20; border-color:${ch.color};">
+            ${ch.name} ${ch.cooldown > 0 ? `(${ch.cooldown}s)` : ''}
+          </button>`
+        ).join('');
+        
+        panel.style.display = 'block';
       }
     };
+    
+    // 聊天发送函数
+    function sendChatMessage() {
+      const input = document.getElementById('chatInput');
+      const messages = document.getElementById('chatMessages');
+      if (input.value.trim()) {
+        const msg = document.createElement('div');
+        msg.style.marginBottom = '5px';
+        msg.innerHTML = `<span style="color:#FFD700;">[${playerData.username}]</span> <span style="color:#fff;">${input.value}</span>`;
+        messages.appendChild(msg);
+        messages.scrollTop = messages.scrollHeight;
+        input.value = '';
+      }
+    }
     
     // 绑定菜单按钮
     document.getElementById('menuCharacter').addEventListener('click', () => UI.showCharacter());
@@ -950,6 +1108,10 @@
     document.getElementById('menuGuild').addEventListener('click', () => UI.showGuild());
     document.getElementById('menuPVP').addEventListener('click', () => UI.showPVP());
     document.getElementById('menuShop').addEventListener('click', () => UI.showShop());
+    document.getElementById('menuFriends').addEventListener('click', () => UI.showFriends());
+    document.getElementById('menuMail').addEventListener('click', () => UI.showMail());
+    document.getElementById('menuAuction').addEventListener('click', () => UI.showAuction());
+    document.getElementById('menuChat').addEventListener('click', () => UI.showChat());
     
     // 经验和升级系统
     function gainExp(amount) {

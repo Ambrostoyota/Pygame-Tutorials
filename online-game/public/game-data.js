@@ -258,6 +258,146 @@ const GAME_DATA = {
       { id: 4, name: '公会商店', effect: '开启特殊商店', cost: 5000 },
       { id: 5, name: '公会副本', effect: '开启公会副本', cost: 10000 }
     ]
+  },
+
+  // 社交系统
+  social: {
+    friendsList: {
+      maxFriends: 100,
+      categories: ['在线好友', '离线好友', '黑名单', '最近联系'],
+      features: ['私聊', '组队邀请', '传送到好友', '赠送礼物', '查看装备']
+    },
+    chatChannels: [
+      { id: 'world', name: '世界频道', color: '#FFD700', cooldown: 10 },
+      { id: 'guild', name: '公会频道', color: '#00FF00', cooldown: 0 },
+      { id: 'team', name: '组队频道', color: '#00BFFF', cooldown: 0 },
+      { id: 'private', name: '私聊频道', color: '#FF69B4', cooldown: 0 },
+      { id: 'trade', name: '交易频道', color: '#FFA500', cooldown: 30 },
+      { id: 'recruit', name: '招募频道', color: '#9370DB', cooldown: 60 }
+    ],
+    emotions: ['😊', '😂', '😭', '😡', '❤️', '👍', '👎', '🎉', '⚔️', '🛡️', '💰', '🏆'],
+    voiceChat: {
+      enabled: true,
+      channels: ['公会语音', '组队语音', '好友语音']
+    }
+  },
+
+  // 邮件系统
+  mail: {
+    maxInbox: 100,
+    maxSaved: 50,
+    types: [
+      { type: 'system', name: '系统邮件', icon: '📧', canReply: false },
+      { type: 'player', name: '玩家邮件', icon: '✉️', canReply: true },
+      { type: 'auction', name: '拍卖行', icon: '💰', canReply: false },
+      { type: 'guild', name: '公会邮件', icon: '🏰', canReply: true },
+      { type: 'reward', name: '奖励邮件', icon: '🎁', canReply: false }
+    ],
+    features: ['附件物品', '附件金币', '批量删除', '一键领取', '标记为已读']
+  },
+
+  // 交易系统
+  trading: {
+    auctionHouse: {
+      categories: ['武器', '护甲', '饰品', '消耗品', '材料', '宠物', '坐骑', '配方', '其他'],
+      rarities: ['全部', '普通', '稀有', '史诗', '传说'],
+      sortOptions: ['价格升序', '价格降序', '时间最新', '时间最旧', '剩余时间'],
+      fees: { listingFee: 0.05, successFee: 0.10, duration: [12, 24, 48] },
+      features: ['竞价', '一口价', '收藏关注', '历史记录', '推荐商品']
+    },
+    marketplace: {
+      stalls: { maxStalls: 1000, playerStallCost: 10000, duration: 24, maxItems: 20 },
+      features: ['搜索商品', '店铺装饰', '店铺公告', '交易记录', '信誉系统']
+    },
+    directTrade: {
+      maxGold: 999999999,
+      maxItems: 8,
+      features: ['交易锁定', '交易确认', '交易历史', '交易保护'],
+      safetyTips: ['检查物品', '确认金额', '防止诈骗', '不信任链接']
+    }
+  },
+
+  // 剧情系统
+  story: {
+    mainStory: [
+      {
+        chapter: 1, title: '命运的开端',
+        acts: [
+          { id: 1, name: '新手村的晨曦', duration: 15, cutscene: true },
+          { id: 2, name: '第一次冒险', duration: 30, cutscene: false },
+          { id: 3, name: '暗影来袭', duration: 45, cutscene: true },
+          { id: 4, name: '导师的教诲', duration: 20, cutscene: false },
+          { id: 5, name: '初次试炼', duration: 60, cutscene: true }
+        ],
+        totalTime: 170
+      },
+      {
+        chapter: 2, title: '暗黑森林的秘密',
+        acts: [
+          { id: 6, name: '森林深处', duration: 40, cutscene: true },
+          { id: 7, name: '精灵的请求', duration: 35, cutscene: false },
+          { id: 8, name: '古老遗迹', duration: 50, cutscene: true },
+          { id: 9, name: '邪恶的阴谋', duration: 45, cutscene: true },
+          { id: 10, name: '守护者之战', duration: 90, cutscene: true }
+        ],
+        totalTime: 260
+      },
+      {
+        chapter: 3, title: '沙漠中的迷失',
+        acts: [
+          { id: 11, name: '荒芜之地', duration: 30, cutscene: true },
+          { id: 12, name: '沙漠商队', duration: 25, cutscene: false },
+          { id: 13, name: '古墓探险', duration: 70, cutscene: true },
+          { id: 14, name: '法老的诅咒', duration: 55, cutscene: true },
+          { id: 15, name: '真相揭晓', duration: 40, cutscene: false }
+        ],
+        totalTime: 220
+      }
+      // 共50章，每章4-6小时，总计约200小时主线内容
+    ],
+    npcs: [
+      { id: 1, name: '村长艾伦', role: '新手村长', dialogues: 25, voiceLines: true },
+      { id: 2, name: '铁匠莫林', role: '武器商人', dialogues: 30, voiceLines: true },
+      { id: 3, name: '法师艾莉娅', role: '魔法导师', dialogues: 40, voiceLines: true },
+      { id: 4, name: '游侠卡尔', role: '任务NPC', dialogues: 35, voiceLines: true },
+      { id: 5, name: '暗影刺客', role: '反派角色', dialogues: 20, voiceLines: true }
+      // 共300+ NPC，每个NPC 20-50条对话
+    ],
+    cutscenes: [
+      { id: 1, name: '开场动画', duration: 180, quality: '4K', type: 'intro' },
+      { id: 2, name: '暗影降临', duration: 120, quality: '4K', type: 'plot' },
+      { id: 3, name: '精灵森林', duration: 90, quality: '4K', type: 'plot' },
+      { id: 4, name: '古墓觉醒', duration: 150, quality: '4K', type: 'plot' },
+      { id: 5, name: '龙的苏醒', duration: 200, quality: '4K', type: 'boss' },
+      { id: 6, name: '最终决战', duration: 300, quality: '4K', type: 'finale' }
+      // 共100+过场动画
+    ],
+    choices: [
+      {
+        id: 1, scene: '村长的请求', question: '你愿意帮助村民们吗？',
+        options: [
+          { text: '我愿意帮助', alignment: 'good', reward: 'exp', consequence: 'villageAlliance' },
+          { text: '我需要报酬', alignment: 'neutral', reward: 'gold', consequence: 'mercenaryPath' },
+          { text: '这不关我的事', alignment: 'evil', reward: 'item', consequence: 'darkPath' }
+        ]
+      },
+      {
+        id: 2, scene: '精灵的考验', question: '你会如何对待被困的精灵？',
+        options: [
+          { text: '立即释放', alignment: 'good', consequence: 'elfFriend' },
+          { text: '要求交换条件', alignment: 'neutral', consequence: 'negotiator' },
+          { text: '留作人质', alignment: 'evil', consequence: 'elfEnemy' }
+        ]
+      }
+      // 共200+剧情选择点
+    ],
+    endings: [
+      { id: 1, name: '光明之路', requirement: 'good', unlocks: '光明骑士称号' },
+      { id: 2, name: '中立之道', requirement: 'neutral', unlocks: '自由战士称号' },
+      { id: 3, name: '暗影降临', requirement: 'evil', unlocks: '暗黑领主称号' },
+      { id: 4, name: '完美结局', requirement: 'all', unlocks: '传奇英雄称号' },
+      { id: 5, name: '隐藏结局', requirement: 'secret', unlocks: '命运主宰称号' }
+    ]
   }
 };
 
