@@ -3,32 +3,97 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Pygame Online - Multiplayer</title>
+  <title>🎮 Legend of Heroes - Online Epic Adventure</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
   <style>
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
     }
+    
+    @keyframes starfield {
+      0% { transform: translate3d(0, 0, 0); }
+      100% { transform: translate3d(0, 1000px, 0); }
+    }
+    
+    @keyframes glow {
+      0%, 100% { text-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00, 0 0 30px #00ff00; }
+      50% { text-shadow: 0 0 20px #00ff00, 0 0 30px #00ff00, 0 0 40px #00ff00, 0 0 50px #00ff00; }
+    }
+    
+    @keyframes float {
+      0%, 100% { transform: translate3d(0, 0, 0); }
+      50% { transform: translate3d(0, -10px, 0); }
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale3d(0.9, 0.9, 1); }
+      to { opacity: 1; transform: scale3d(1, 1, 1); }
+    }
+    
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.05); opacity: 0.8; }
+    }
+    
     body {
-      background: #1a1a2e;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
       display: flex;
       justify-content: center;
       align-items: center;
       min-height: 100vh;
-      font-family: 'Arial', sans-serif;
+      font-family: 'Cinzel', serif;
       color: white;
       overflow: hidden;
+      position: relative;
+      will-change: auto;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
+    
+    body::before {
+      content: '';
+      position: absolute;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(2px 2px at 20% 30%, white, transparent),
+                  radial-gradient(2px 2px at 60% 70%, white, transparent),
+                  radial-gradient(1px 1px at 50% 50%, white, transparent),
+                  radial-gradient(1px 1px at 80% 10%, white, transparent),
+                  radial-gradient(2px 2px at 90% 60%, white, transparent);
+      background-size: 200px 200px;
+      animation: starfield 50s linear infinite;
+      opacity: 0.5;
+    }
+    
     #gameContainer {
       position: relative;
-      background: #0f3460;
-      border: 3px solid #16213e;
-      box-shadow: 0 0 30px rgba(0, 240, 255, 0.3);
+      background: linear-gradient(to bottom, rgba(15, 52, 96, 0.95), rgba(26, 26, 46, 0.95));
+      border: 4px solid;
+      border-image: linear-gradient(45deg, #00ff00, #00ffff, #ff00ff, #00ff00) 1;
+      box-shadow: 0 0 50px rgba(0, 255, 255, 0.5), 
+                  inset 0 0 50px rgba(0, 0, 0, 0.5);
+      animation: fadeIn 1s ease-out;
+      backdrop-filter: blur(10px);
+      will-change: transform;
+      transform: translateZ(0);
+      -webkit-backface-visibility: hidden;
+      backface-visibility: hidden;
     }
+    
     #canvas {
       display: block;
-      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      filter: contrast(1.1) brightness(1.05);
+      will-change: contents;
+      transform: translateZ(0);
     }
     #ui {
       position: absolute;
@@ -39,20 +104,93 @@
       justify-content: space-between;
       font-size: 18px;
       font-weight: bold;
-      text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+      text-shadow: 0 0 10px rgba(0,255,0,0.8), 2px 2px 4px rgba(0,0,0,0.8);
       pointer-events: none;
+      animation: glow 2s ease-in-out infinite;
     }
+    
+    #storyPanel {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(to top, rgba(0,0,0,0.95), rgba(0,0,0,0.7));
+      padding: 20px;
+      transform: translateY(100%);
+      transition: transform 0.5s ease-out;
+      border-top: 2px solid #00ff00;
+    }
+    
+    #storyPanel.active {
+      transform: translateY(0);
+    }
+    
+    #storyText {
+      font-family: 'Cinzel', serif;
+      font-size: 16px;
+      color: #ffffff;
+      line-height: 1.6;
+      margin-bottom: 10px;
+      text-shadow: 0 0 5px rgba(0,255,0,0.5);
+    }
+    
+    #storySpeaker {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 12px;
+      color: #00ff00;
+      margin-bottom: 5px;
+    }
+    
+    #particleCanvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      z-index: 10;
+    }
+    
+    #audioControls {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      display: flex;
+      gap: 10px;
+      z-index: 1000;
+    }
+    
+    .audio-btn {
+      background: rgba(0,0,0,0.7);
+      border: 2px solid #00ff00;
+      color: #00ff00;
+      padding: 8px 12px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.3s;
+    }
+    
+    .audio-btn:hover {
+      background: rgba(0,255,0,0.2);
+      box-shadow: 0 0 15px rgba(0,255,0,0.5);
+    }
+    
+    .audio-btn.active {
+      background: rgba(0,255,0,0.3);
+      animation: glow 1s ease-in-out infinite;
+    }
+    
     #controls {
       position: absolute;
       bottom: 20px;
       left: 50%;
       transform: translateX(-50%);
-      display: none; /* Show on mobile */
+      display: none;
       gap: 10px;
     }
+    
     .btn {
-      background: rgba(255,255,255,0.2);
-      border: 2px solid white;
+      background: linear-gradient(135deg, rgba(0,255,0,0.3), rgba(0,200,0,0.3));
+      border: 2px solid #00ff00;
       color: white;
       padding: 15px 25px;
       font-size: 18px;
@@ -60,74 +198,166 @@
       cursor: pointer;
       user-select: none;
       touch-action: manipulation;
+      box-shadow: 0 0 15px rgba(0,255,0,0.3);
+      transition: all 0.3s;
     }
+    
     .btn:active {
-      background: rgba(255,255,255,0.4);
+      background: linear-gradient(135deg, rgba(0,255,0,0.5), rgba(0,200,0,0.5));
+      box-shadow: 0 0 25px rgba(0,255,0,0.6);
+      transform: scale(0.95);
     }
     #playerList {
       position: absolute;
       top: 60px;
       right: 10px;
-      background: rgba(0,0,0,0.7);
-      padding: 10px;
-      border-radius: 5px;
+      background: linear-gradient(135deg, rgba(0,0,0,0.9), rgba(0,50,0,0.8));
+      padding: 12px;
+      border-radius: 10px;
+      border: 2px solid rgba(0,255,0,0.5);
       font-size: 14px;
       max-height: 200px;
       overflow-y: auto;
+      box-shadow: 0 0 20px rgba(0,255,0,0.3);
     }
+    
     .player-item {
-      padding: 5px;
-      margin: 3px 0;
-      background: rgba(255,255,255,0.1);
-      border-radius: 3px;
+      padding: 8px;
+      margin: 5px 0;
+      background: linear-gradient(90deg, rgba(0,255,0,0.1), rgba(0,200,0,0.1));
+      border-radius: 5px;
+      border-left: 3px solid #00ff00;
+      transition: all 0.3s;
+      animation: float 3s ease-in-out infinite;
     }
+    
+    .player-item:hover {
+      background: linear-gradient(90deg, rgba(0,255,0,0.2), rgba(0,200,0,0.2));
+      transform: translateX(-5px);
+    }
+    
     #roomPanel {
       position: absolute;
       top: 60px;
       left: 10px;
-      background: rgba(0,0,0,0.8);
+      background: linear-gradient(135deg, rgba(0,0,0,0.9), rgba(0,50,0,0.8));
       padding: 15px;
       border-radius: 10px;
+      border: 2px solid rgba(0,255,0,0.5);
       font-size: 14px;
       max-width: 250px;
       max-height: 300px;
       overflow-y: auto;
+      box-shadow: 0 0 20px rgba(0,255,0,0.3);
     }
+    
     #roomPanel h3 {
       margin: 0 0 10px 0;
       font-size: 16px;
       color: #00ff00;
+      font-family: 'Press Start 2P', monospace;
+      text-shadow: 0 0 10px rgba(0,255,0,0.8);
     }
+    
     .room-item {
-      padding: 8px;
-      margin: 5px 0;
-      background: rgba(255,255,255,0.1);
-      border-radius: 5px;
+      padding: 10px;
+      margin: 8px 0;
+      background: linear-gradient(135deg, rgba(0,255,0,0.1), rgba(0,200,0,0.05));
+      border-radius: 8px;
+      border: 1px solid rgba(0,255,0,0.3);
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.3s;
     }
+    
     .room-item:hover {
-      background: rgba(255,255,255,0.3);
+      background: linear-gradient(135deg, rgba(0,255,0,0.3), rgba(0,200,0,0.2));
       transform: scale(1.05);
+      box-shadow: 0 0 15px rgba(0,255,0,0.5);
     }
+    
     .room-item.current {
-      background: rgba(0,255,0,0.3);
+      background: linear-gradient(135deg, rgba(0,255,0,0.4), rgba(0,200,0,0.3));
       border: 2px solid #00ff00;
+      box-shadow: 0 0 20px rgba(0,255,0,0.6), inset 0 0 10px rgba(0,255,0,0.2);
     }
+    
     #createRoomBtn {
       width: 100%;
       margin-top: 10px;
-      padding: 10px;
-      background: #00ff00;
-      color: black;
+      padding: 12px;
+      background: linear-gradient(135deg, #00ff00, #00cc00);
+      color: #000;
       border: none;
-      border-radius: 5px;
+      border-radius: 8px;
       font-weight: bold;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 10px;
       cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 0 15px rgba(0,255,0,0.5);
     }
+    
     #createRoomBtn:hover {
-      background: #00dd00;
+      background: linear-gradient(135deg, #00ff00, #00dd00);
+      box-shadow: 0 0 25px rgba(0,255,0,0.8);
+      transform: translateY(-2px);
     }
+    
+    #connectionStatus {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 24px;
+      font-family: 'Press Start 2P', monospace;
+      background: linear-gradient(135deg, rgba(0,0,0,0.95), rgba(0,50,0,0.9));
+      padding: 30px 50px;
+      border-radius: 15px;
+      border: 3px solid #00ff00;
+      box-shadow: 0 0 40px rgba(0,255,0,0.6);
+      animation: glow 2s ease-in-out infinite;
+      z-index: 9999;
+    }
+    
+    #loadingSpinner {
+      width: 50px;
+      height: 50px;
+      border: 5px solid rgba(0, 255, 0, 0.3);
+      border-top-color: #00ff00;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 20px auto 0;
+    }
+    
+    #fps {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(0,0,0,0.7);
+      padding: 5px 10px;
+      border-radius: 5px;
+      font-size: 12px;
+      font-family: monospace;
+      color: #00ff00;
+      z-index: 100;
+    }
+    
+    .toast {
+      position: fixed;
+      bottom: 100px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: linear-gradient(135deg, rgba(0,255,0,0.95), rgba(0,200,0,0.95));
+      color: #000;
+      padding: 15px 30px;
+      border-radius: 10px;
+      font-weight: bold;
+      box-shadow: 0 0 30px rgba(0,255,0,0.8);
+      animation: pulse 0.5s ease-in-out;
+      z-index: 10000;
+      pointer-events: none;
+    }
+    
     @media (max-width: 600px) {
       #canvas {
         max-width: 100vw;
@@ -136,34 +366,47 @@
       #controls {
         display: flex;
       }
-    }
-    #connectionStatus {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-size: 24px;
-      background: rgba(0,0,0,0.8);
-      padding: 20px 40px;
-      border-radius: 10px;
+      #storyText {
+        font-size: 14px;
+      }
     }
   </style>
 </head>
 <body>
   <div id="gameContainer">
     <canvas id="canvas" width="500" height="480"></canvas>
+    <canvas id="particleCanvas" width="500" height="480"></canvas>
+    
+    <div id="fps">FPS: 0</div>
+    
+    <div id="audioControls">
+      <button class="audio-btn" id="musicBtn">🎵 Music</button>
+      <button class="audio-btn" id="sfxBtn">🔊 SFX</button>
+    </div>
+    
     <div id="ui">
       <div id="health">❤️ HP: 100</div>
       <div id="score">⭐ Score: 0</div>
       <div id="players">👥 Players: 1</div>
     </div>
+    
     <div id="playerList"></div>
+    
     <div id="roomPanel">
-      <h3>🏠 Rooms</h3>
+      <h3>🏠 ROOMS</h3>
       <div id="roomList"></div>
-      <button id="createRoomBtn">➕ Create Room</button>
+      <button id="createRoomBtn">➕ CREATE</button>
     </div>
-    <div id="connectionStatus">🔌 Connecting...</div>
+    
+    <div id="storyPanel">
+      <div id="storySpeaker"></div>
+      <div id="storyText"></div>
+    </div>
+    
+    <div id="connectionStatus">
+      🔌 Connecting...
+      <div id="loadingSpinner"></div>
+    </div>
     
     <!-- Mobile controls -->
     <div id="controls">
@@ -173,12 +416,221 @@
       <button class="btn" id="rightBtn">▶️</button>
     </div>
   </div>
+  
+  <!-- Audio Elements -->
+  <audio id="bgMusic" loop>
+    <source src="https://cdn.pixabay.com/download/audio/2022/03/10/audio_d1718ab41b.mp3" type="audio/mp3">
+  </audio>
+  <audio id="shootSound">
+    <source src="https://cdn.pixabay.com/download/audio/2021/08/04/audio_12b0c7443c.mp3" type="audio/mp3">
+  </audio>
+  <audio id="hitSound">
+    <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_c6f5764d24.mp3" type="audio/mp3">
+  </audio>
 
   <script src="/socket.io/socket.io.js"></script>
   <script>
     const canvas = document.getElementById('canvas');
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true });
+    const particleCanvas = document.getElementById('particleCanvas');
+    const particleCtx = particleCanvas.getContext('2d', { alpha: true });
     const connectionStatus = document.getElementById('connectionStatus');
+    const fpsDisplay = document.getElementById('fps');
+    
+    // Performance monitoring
+    let fps = 0;
+    let frameCount = 0;
+    let lastFpsUpdate = Date.now();
+    
+    function updateFPS() {
+      frameCount++;
+      const now = Date.now();
+      if (now - lastFpsUpdate >= 1000) {
+        fps = frameCount;
+        fpsDisplay.textContent = `FPS: ${fps}`;
+        frameCount = 0;
+        lastFpsUpdate = now;
+      }
+    }
+    
+    // Toast notifications
+    function showToast(message, duration = 2000) {
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.textContent = message;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), duration);
+    }
+    
+    // Throttle function for performance
+    function throttle(func, limit) {
+      let inThrottle;
+      return function(...args) {
+        if (!inThrottle) {
+          func.apply(this, args);
+          inThrottle = true;
+          setTimeout(() => inThrottle = false, limit);
+        }
+      };
+    }
+
+    // Audio System
+    const bgMusic = document.getElementById('bgMusic');
+    const shootSound = document.getElementById('shootSound');
+    const hitSound = document.getElementById('hitSound');
+    let musicEnabled = true;
+    let sfxEnabled = true;
+    
+    bgMusic.volume = 0.3;
+    shootSound.volume = 0.4;
+    hitSound.volume = 0.5;
+    
+    document.getElementById('musicBtn').addEventListener('click', () => {
+      musicEnabled = !musicEnabled;
+      const btn = document.getElementById('musicBtn');
+      if (musicEnabled) {
+        bgMusic.play();
+        btn.classList.add('active');
+        btn.textContent = '🎵 Music ON';
+      } else {
+        bgMusic.pause();
+        btn.classList.remove('active');
+        btn.textContent = '🎵 Music OFF';
+      }
+    });
+    
+    document.getElementById('sfxBtn').addEventListener('click', () => {
+      sfxEnabled = !sfxEnabled;
+      const btn = document.getElementById('sfxBtn');
+      btn.classList.toggle('active');
+      btn.textContent = sfxEnabled ? '🔊 SFX ON' : '🔇 SFX OFF';
+    });
+    
+    function playSound(sound) {
+      if (sfxEnabled) {
+        sound.currentTime = 0;
+        sound.play().catch(e => console.log('Audio play failed:', e));
+      }
+    }
+    
+    // Particle System with object pooling
+    class Particle {
+      constructor() {
+        this.reset(0, 0, '#FFF', 0);
+      }
+      
+      reset(x, y, color, velocity) {
+        this.x = x;
+        this.y = y;
+        this.vx = (Math.random() - 0.5) * velocity;
+        this.vy = (Math.random() - 0.5) * velocity;
+        this.color = color;
+        this.life = 1;
+        this.decay = 0.02;
+        this.size = Math.random() * 4 + 2;
+        this.active = true;
+      }
+      
+      update() {
+        if (!this.active) return;
+        this.x += this.vx;
+        this.y += this.vy;
+        this.vy += 0.1;
+        this.life -= this.decay;
+        if (this.life <= 0) this.active = false;
+      }
+      
+      draw() {
+        if (!this.active) return;
+        particleCtx.globalAlpha = this.life;
+        particleCtx.fillStyle = this.color;
+        particleCtx.beginPath();
+        particleCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        particleCtx.fill();
+      }
+    }
+    
+    // Object pool for particles
+    const particlePool = [];
+    const MAX_PARTICLES = 500;
+    for (let i = 0; i < MAX_PARTICLES; i++) {
+      particlePool.push(new Particle());
+    }
+    
+    let particles = [];
+    
+    function getParticle(x, y, color, velocity) {
+      for (let p of particlePool) {
+        if (!p.active) {
+          p.reset(x, y, color, velocity);
+          return p;
+        }
+      }
+      return null;
+    }
+    
+    function createExplosion(x, y, color = '#FFD700') {
+      const count = fps > 30 ? 20 : 10; // Reduce particles on low FPS
+      for (let i = 0; i < count; i++) {
+        const particle = getParticle(x, y, color, 8);
+        if (particle && !particles.includes(particle)) {
+          particles.push(particle);
+        }
+      }
+    }
+    
+    function updateParticles() {
+      particleCtx.clearRect(0, 0, particleCanvas.width, particleCanvas.height);
+      particleCtx.save();
+      
+      // Batch drawing for better performance
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.update();
+        p.draw();
+        if (!p.active) {
+          particles.splice(i, 1);
+        }
+      }
+      
+      particleCtx.restore();
+    }
+    
+    // Story System
+    const storyPanel = document.getElementById('storyPanel');
+    const storyText = document.getElementById('storyText');
+    const storySpeaker = document.getElementById('storySpeaker');
+    
+    const storyLines = [
+      { speaker: 'Guardian', text: 'Welcome, brave hero! The realm is under siege by dark forces...' },
+      { speaker: 'Guardian', text: 'You must gather allies and fight together to restore peace!' },
+      { speaker: 'Hero', text: 'I will not let darkness prevail. Let the battle begin!' }
+    ];
+    
+    let currentStoryIndex = 0;
+    let storyDisplayed = false;
+    
+    function showStory(index) {
+      if (index >= storyLines.length) return;
+      const story = storyLines[index];
+      storySpeaker.textContent = `${story.speaker}:`;
+      storyText.textContent = story.text;
+      storyPanel.classList.add('active');
+      
+      setTimeout(() => {
+        storyPanel.classList.remove('active');
+      }, 5000);
+    }
+    
+    // Show opening story after connection
+    setTimeout(() => {
+      if (!storyDisplayed) {
+        showStory(0);
+        storyDisplayed = true;
+        setTimeout(() => showStory(1), 6000);
+        setTimeout(() => showStory(2), 12000);
+      }
+    }, 3000);
 
     // Game state
     let myPlayerId = null;
@@ -190,16 +642,24 @@
     let rooms = [];
 
     // Connect to server
-    const socket = io(window.location.origin);
+    const socket = io(window.location.origin, {
+      transports: ['websocket'],
+      upgrade: false
+    });
 
     socket.on('connect', () => {
-      connectionStatus.textContent = '✅ Connected!';
-      setTimeout(() => connectionStatus.style.display = 'none', 2000);
+      connectionStatus.innerHTML = '✅ Connected!';
+      showToast('🎮 Connected to server!');
+      setTimeout(() => {
+        connectionStatus.style.display = 'none';
+        if (musicEnabled) bgMusic.play().catch(e => console.log('Music autoplay blocked'));
+      }, 2000);
     });
 
     socket.on('disconnect', () => {
-      connectionStatus.textContent = '❌ Disconnected';
+      connectionStatus.innerHTML = '❌ Disconnected<div id="loadingSpinner"></div>';
       connectionStatus.style.display = 'block';
+      showToast('❌ Connection lost!', 3000);
     });
 
     socket.on('init', (data) => {
@@ -216,9 +676,14 @@
     socket.on('playerJoined', (player) => {
       players[player.id] = player;
       updatePlayerList();
+      showToast(`👋 ${player.username} joined!`);
     });
 
     socket.on('playerLeft', (playerId) => {
+      const player = players[playerId];
+      if (player) {
+        showToast(`👋 ${player.username} left`);
+      }
       delete players[playerId];
       updatePlayerList();
     });
@@ -235,6 +700,8 @@
 
     socket.on('bulletCreated', (bullet) => {
       bullets[bullet.id] = bullet;
+      playSound(shootSound);
+      createExplosion(bullet.x, bullet.y, '#FFFF00');
     });
 
     socket.on('bulletRemoved', (bulletId) => {
@@ -243,9 +710,15 @@
 
     socket.on('enemySpawned', (enemy) => {
       enemies[enemy.id] = enemy;
+      createExplosion(enemy.x + 32, enemy.y + 32, '#FF0000');
     });
 
     socket.on('enemyKilled', (data) => {
+      const enemy = enemies[data.enemyId];
+      if (enemy) {
+        createExplosion(enemy.x + 32, enemy.y + 32, '#FF4444');
+        playSound(hitSound);
+      }
       delete enemies[data.enemyId];
       if (data.killerId === myPlayerId) {
         players[myPlayerId].score += 10;
@@ -256,13 +729,20 @@
     socket.on('enemyHit', (data) => {
       if (enemies[data.enemyId]) {
         enemies[data.enemyId].health = data.health;
+        createExplosion(
+          enemies[data.enemyId].x + 32, 
+          enemies[data.enemyId].y + 32, 
+          '#FFA500'
+        );
       }
     });
 
     socket.on('playerHit', (data) => {
       if (players[data.id]) {
         players[data.id].health = data.health;
+        createExplosion(players[data.id].x + 32, players[data.id].y + 32, '#FF6666');
         if (data.id === myPlayerId) {
+          playSound(hitSound);
           updateUI();
         }
       }
@@ -271,11 +751,19 @@
     socket.on('playerDied', (playerId) => {
       if (players[playerId]) {
         players[playerId].health = 0;
+        createExplosion(players[playerId].x + 32, players[playerId].y + 32, '#000000');
+        if (playerId === myPlayerId) {
+          showToast('💀 You died! Respawning...', 2000);
+        }
       }
     });
 
     socket.on('playerRespawned', (player) => {
       players[player.id] = player;
+      createExplosion(player.x + 32, player.y + 32, '#00FF00');
+      if (player.id === myPlayerId) {
+        showToast('✨ Respawned!', 1500);
+      }
       if (player.id === myPlayerId) {
         updateUI();
       }
@@ -305,14 +793,18 @@
       bullets = data.bullets;
       updatePlayerList();
       updateRoomList();
+      showToast(`🏠 Joined room!`);
     });
 
     socket.on('roomFull', (roomId) => {
-      alert('Room is full!');
+      showToast('❌ Room is full!', 2000);
     });
 
-    // Keyboard controls
+    // Keyboard controls with preventDefault for game keys
     document.addEventListener('keydown', (e) => {
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
+        e.preventDefault();
+      }
       keys[e.key] = true;
     });
 
@@ -330,8 +822,11 @@
     document.getElementById('shootBtn').addEventListener('touchstart', () => keys[' '] = true);
     document.getElementById('shootBtn').addEventListener('touchend', () => keys[' '] = false);
 
-    // Game loop
+    // Game loop with throttled network updates
     let lastShot = 0;
+    let lastNetworkUpdate = 0;
+    const NETWORK_UPDATE_RATE = 1000 / 30; // 30 updates per second
+    
     function gameLoop() {
       if (!myPlayerId || !players[myPlayerId]) {
         requestAnimationFrame(gameLoop);
@@ -340,6 +835,7 @@
 
       const me = players[myPlayerId];
       let moved = false;
+      const now = Date.now();
 
       // Movement
       if (keys['ArrowLeft'] && me.x > 5) {
@@ -352,6 +848,9 @@
         me.right = true;
         me.left = false;
         moved = true;
+      } else {
+        me.left = false;
+        me.right = false;
       }
 
       // Jump
@@ -373,19 +872,19 @@
         moved = true;
       }
 
-      // Shoot
-      if (keys[' '] && Date.now() - lastShot > 300) {
+      // Shoot with cooldown
+      if (keys[' '] && now - lastShot > 300) {
         const facing = me.left ? -1 : 1;
         socket.emit('shoot', {
           x: me.x + me.width / 2,
           y: me.y + me.height / 2,
           facing: facing
         });
-        lastShot = Date.now();
+        lastShot = now;
       }
 
-      // Send movement to server
-      if (moved) {
+      // Send movement to server (throttled)
+      if (moved && now - lastNetworkUpdate > NETWORK_UPDATE_RATE) {
         socket.emit('playerMove', {
           x: me.x,
           y: me.y,
@@ -393,60 +892,223 @@
           right: me.right,
           isJump: me.isJump
         });
+        lastNetworkUpdate = now;
       }
 
       // Render
       render();
+      updateParticles();
+      updateFPS();
       requestAnimationFrame(gameLoop);
     }
 
-    function render() {
-      // Clear canvas
-      ctx.fillStyle = '#87CEEB';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // Cache background rendering
+    let backgroundCanvas;
+    let backgroundRendered = false;
+    
+    function renderBackground() {
+      if (backgroundRendered) {
+        ctx.drawImage(backgroundCanvas, 0, 0);
+        return;
+      }
+      
+      backgroundCanvas = document.createElement('canvas');
+      backgroundCanvas.width = canvas.width;
+      backgroundCanvas.height = canvas.height;
+      const bgCtx = backgroundCanvas.getContext('2d');
+      
+      // Draw animated sky
+      const gradient = bgCtx.createLinearGradient(0, 0, 0, canvas.height);
+      gradient.addColorStop(0, '#1a1a4e');
+      gradient.addColorStop(0.5, '#2a4a6a');
+      gradient.addColorStop(1, '#3a6a8a');
+      bgCtx.fillStyle = gradient;
+      bgCtx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // Draw stars
+      bgCtx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+      for (let i = 0; i < 50; i++) {
+        const x = (i * 73) % canvas.width;
+        const y = (i * 97) % (canvas.height - 100);
+        const size = (i % 3) + 1;
+        bgCtx.beginPath();
+        bgCtx.arc(x, y, size, 0, Math.PI * 2);
+        bgCtx.fill();
+      }
+      
+      // Draw mountains
+      bgCtx.fillStyle = '#2a3a4a';
+      bgCtx.beginPath();
+      bgCtx.moveTo(0, 460);
+      bgCtx.lineTo(100, 380);
+      bgCtx.lineTo(200, 420);
+      bgCtx.lineTo(300, 360);
+      bgCtx.lineTo(400, 400);
+      bgCtx.lineTo(500, 370);
+      bgCtx.lineTo(500, 460);
+      bgCtx.closePath();
+      bgCtx.fill();
       
       // Draw ground
-      ctx.fillStyle = '#8B4513';
-      ctx.fillRect(0, 460, 500, 20);
+      const groundGradient = bgCtx.createLinearGradient(0, 460, 0, 480);
+      groundGradient.addColorStop(0, '#4a5a3a');
+      groundGradient.addColorStop(1, '#2a3a1a');
+      bgCtx.fillStyle = groundGradient;
+      bgCtx.fillRect(0, 460, 500, 20);
+      
+      // Ground details
+      bgCtx.fillStyle = '#3a4a2a';
+      for (let i = 0; i < 500; i += 20) {
+        bgCtx.fillRect(i, 460, 10, 2);
+      }
+      
+      backgroundRendered = true;
+      ctx.drawImage(backgroundCanvas, 0, 0);
+    }
 
-      // Draw enemies
+    function render() {
+      // Use cached background
+      renderBackground();
+      // Draw enemies with glow effect
       Object.values(enemies).forEach(enemy => {
-        ctx.fillStyle = '#FF4444';
+        // Shadow
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+        ctx.fillRect(enemy.x + 5, enemy.y + enemy.height, enemy.width - 10, 5);
+        
+        // Glow
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = '#FF0000';
+        
+        // Enemy body with gradient
+        const enemyGradient = ctx.createLinearGradient(
+          enemy.x, enemy.y, 
+          enemy.x, enemy.y + enemy.height
+        );
+        enemyGradient.addColorStop(0, '#FF6666');
+        enemyGradient.addColorStop(1, '#CC0000');
+        ctx.fillStyle = enemyGradient;
         ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
         
+        // Enemy eyes
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = '#FFFF00';
+        ctx.beginPath();
+        ctx.arc(enemy.x + 20, enemy.y + 20, 4, 0, Math.PI * 2);
+        ctx.arc(enemy.x + 44, enemy.y + 20, 4, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Health bar background
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        ctx.fillRect(enemy.x, enemy.y - 12, 64, 6);
+        
         // Health bar
-        ctx.fillStyle = '#FF0000';
-        ctx.fillRect(enemy.x, enemy.y - 10, 50, 5);
-        ctx.fillStyle = '#00FF00';
-        ctx.fillRect(enemy.x, enemy.y - 10, 50 * (enemy.health / 10), 5);
+        const healthPercent = enemy.health / 10;
+        const healthColor = healthPercent > 0.5 ? '#00FF00' : healthPercent > 0.25 ? '#FFAA00' : '#FF0000';
+        ctx.fillStyle = healthColor;
+        ctx.fillRect(enemy.x + 1, enemy.y - 11, 62 * healthPercent, 4);
       });
 
-      // Draw bullets
+      // Draw bullets with glow
       Object.values(bullets).forEach(bullet => {
-        ctx.fillStyle = '#000000';
+        // Bullet glow
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = '#FFFF00';
+        
+        // Bullet trail
+        ctx.fillStyle = 'rgba(255, 255, 0, 0.3)';
+        ctx.beginPath();
+        ctx.arc(bullet.x - bullet.facing * 10, bullet.y, 8, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Main bullet
+        const bulletGradient = ctx.createRadialGradient(
+          bullet.x, bullet.y, 0,
+          bullet.x, bullet.y, 6
+        );
+        bulletGradient.addColorStop(0, '#FFFFFF');
+        bulletGradient.addColorStop(0.5, '#FFFF00');
+        bulletGradient.addColorStop(1, '#FF8800');
+        ctx.fillStyle = bulletGradient;
         ctx.beginPath();
         ctx.arc(bullet.x, bullet.y, 6, 0, Math.PI * 2);
         ctx.fill();
+        
+        ctx.shadowBlur = 0;
       });
 
-      // Draw players
+      // Draw players with enhanced graphics
       Object.values(players).forEach(player => {
         const isMe = player.id === myPlayerId;
-        ctx.fillStyle = isMe ? '#00FF00' : '#4444FF';
+        
+        // Player shadow
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+        ctx.fillRect(player.x + 10, player.y + player.height, player.width - 20, 5);
+        
+        // Player glow
+        if (isMe) {
+          ctx.shadowBlur = 20;
+          ctx.shadowColor = '#00FF00';
+        } else {
+          ctx.shadowBlur = 10;
+          ctx.shadowColor = '#4444FF';
+        }
+        
+        // Player body with gradient
+        const playerGradient = ctx.createLinearGradient(
+          player.x, player.y,
+          player.x, player.y + player.height
+        );
+        if (isMe) {
+          playerGradient.addColorStop(0, '#00FF00');
+          playerGradient.addColorStop(1, '#00AA00');
+        } else {
+          playerGradient.addColorStop(0, '#6666FF');
+          playerGradient.addColorStop(1, '#0000AA');
+        }
+        ctx.fillStyle = playerGradient;
         ctx.fillRect(player.x, player.y, player.width, player.height);
         
-        // Name tag
-        ctx.fillStyle = 'white';
-        ctx.font = '12px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText(player.username, player.x + player.width/2, player.y - 5);
+        // Player armor highlights
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.fillRect(player.x + 5, player.y + 5, 10, 20);
+        ctx.fillRect(player.x + player.width - 15, player.y + 5, 10, 20);
         
-        // Health bar
+        // Player face
+        ctx.fillStyle = '#FFE4B5';
+        ctx.fillRect(player.x + 20, player.y + 10, 24, 24);
+        
+        // Eyes
+        ctx.fillStyle = '#000000';
+        ctx.beginPath();
+        ctx.arc(player.x + 28, player.y + 20, 2, 0, Math.PI * 2);
+        ctx.arc(player.x + 36, player.y + 20, 2, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.shadowBlur = 0;
+        
+        // Name tag with background
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        ctx.fillRect(player.x - 5, player.y - 25, player.width + 10, 18);
+        
+        // Name text
+        ctx.fillStyle = isMe ? '#00FF00' : '#FFFFFF';
+        ctx.font = 'bold 12px Cinzel';
+        ctx.textAlign = 'center';
+        ctx.shadowBlur = 5;
+        ctx.shadowColor = isMe ? '#00FF00' : '#FFFFFF';
+        ctx.fillText(player.username, player.x + player.width/2, player.y - 10);
+        ctx.shadowBlur = 0;
+        
+        // Health bar (for other players)
         if (!isMe) {
-          ctx.fillStyle = '#FF0000';
-          ctx.fillRect(player.x, player.y - 15, player.width, 5);
-          ctx.fillStyle = '#00FF00';
-          ctx.fillRect(player.x, player.y - 15, player.width * (player.health / 100), 5);
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+          ctx.fillRect(player.x, player.y - 32, player.width, 6);
+          
+          const healthPercent = player.health / 100;
+          const healthColor = healthPercent > 0.5 ? '#00FF00' : healthPercent > 0.25 ? '#FFAA00' : '#FF0000';
+          ctx.fillStyle = healthColor;
+          ctx.fillRect(player.x + 1, player.y - 31, (player.width - 2) * healthPercent, 4);
         }
       });
     }
