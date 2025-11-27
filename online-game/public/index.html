@@ -81,6 +81,53 @@
       background: rgba(255,255,255,0.1);
       border-radius: 3px;
     }
+    #roomPanel {
+      position: absolute;
+      top: 60px;
+      left: 10px;
+      background: rgba(0,0,0,0.8);
+      padding: 15px;
+      border-radius: 10px;
+      font-size: 14px;
+      max-width: 250px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    #roomPanel h3 {
+      margin: 0 0 10px 0;
+      font-size: 16px;
+      color: #00ff00;
+    }
+    .room-item {
+      padding: 8px;
+      margin: 5px 0;
+      background: rgba(255,255,255,0.1);
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .room-item:hover {
+      background: rgba(255,255,255,0.3);
+      transform: scale(1.05);
+    }
+    .room-item.current {
+      background: rgba(0,255,0,0.3);
+      border: 2px solid #00ff00;
+    }
+    #createRoomBtn {
+      width: 100%;
+      margin-top: 10px;
+      padding: 10px;
+      background: #00ff00;
+      color: black;
+      border: none;
+      border-radius: 5px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    #createRoomBtn:hover {
+      background: #00dd00;
+    }
     @media (max-width: 600px) {
       #canvas {
         max-width: 100vw;
@@ -111,6 +158,11 @@
       <div id="players">👥 Players: 1</div>
     </div>
     <div id="playerList"></div>
+    <div id="roomPanel">
+      <h3>🏠 Rooms</h3>
+      <div id="roomList"></div>
+      <button id="createRoomBtn">➕ Create Room</button>
+    </div>
     <div id="connectionStatus">🔌 Connecting...</div>
     
     <!-- Mobile controls -->
@@ -130,10 +182,12 @@
 
     // Game state
     let myPlayerId = null;
+    let currentRoomId = 'lobby';
     let players = {};
     let enemies = {};
     let bullets = {};
     let keys = {};
+    let rooms = [];
 
     // Connect to server
     const socket = io(window.location.origin);
@@ -150,10 +204,13 @@
 
     socket.on('init', (data) => {
       myPlayerId = data.playerId;
+      currentRoomId = data.roomId;
       players = data.players;
       enemies = data.enemies;
       bullets = data.bullets;
+      rooms = data.rooms || [];
       updatePlayerList();
+      updateRoomList();
     });
 
     socket.on('playerJoined', (player) => {
@@ -230,6 +287,28 @@
 
     socket.on('bulletsUpdate', (updatedBullets) => {
       bullets = updatedBullets;
+    });
+
+    socket.on('roomListUpdate', (roomList) => {
+      rooms = roomList;
+      updateRoomList();
+    });
+
+    socket.on('roomCreated', (data) => {
+      socket.emit('joinRoom', data.roomId);
+    });
+
+    socket.on('roomJoined', (data) => {
+      currentRoomId = data.roomId;
+      players = data.players;
+      enemies = data.enemies;
+      bullets = data.bullets;
+      updatePlayerList();
+      updateRoomList();
+    });
+
+    socket.on('roomFull', (roomId) => {
+      alert('Room is full!');
     });
 
     // Keyboard controls
@@ -394,6 +473,36 @@
       });
       updateUI();
     }
+
+    function updateRoomList() {
+      const list = document.getElementById('roomList');
+      list.innerHTML = '';
+      rooms.forEach(room => {
+        const div = document.createElement('div');
+        div.className = 'room-item';
+        if (room.id === currentRoomId) {
+          div.classList.add('current');
+        }
+        div.innerHTML = `
+          <div style="font-weight: bold;">${room.name}</div>
+          <div style="font-size: 12px; color: #aaa;">${room.playerCount}/${room.maxPlayers} players</div>
+        `;
+        div.onclick = () => {
+          if (room.id !== currentRoomId) {
+            socket.emit('joinRoom', room.id);
+          }
+        };
+        list.appendChild(div);
+      });
+    }
+
+    // Create room button
+    document.getElementById('createRoomBtn').addEventListener('click', () => {
+      const roomName = prompt('Enter room name:');
+      if (roomName) {
+        socket.emit('createRoom', roomName);
+      }
+    });
 
     // Start game loop
     gameLoop();
